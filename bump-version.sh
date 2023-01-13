@@ -38,8 +38,7 @@ NOTICE_FLAG="${CYAN}❯"
 ADJUSTMENTS_MSG="${QUESTION_FLAG} ${CYAN}Now you can make adjustments to ${WHITE}CHANGELOG.md${CYAN}. Then press enter to continue."
 TAGGING_MSG="${NOTICE_FLAG} Tagging new version to the ${WHITE}origin${CYAN}..."
 PUSHING_MSG="${NOTICE_FLAG} Pushing new version to the ${WHITE}origin${CYAN}..."
-
-FOLDER=${PWD##*/}
+TAGGING_MSG=""
 
 if [ -f VERSION ]; then
     BASE_STRING=`cat VERSION`
@@ -60,22 +59,24 @@ if [ -f VERSION ]; then
     echo -e "${NOTICE_FLAG} Will set new version to be ${WHITE}$INPUT_STRING"
     echo $INPUT_STRING > VERSION
     echo "## $INPUT_STRING ($NOW)" > tmpfile
-    git log --no-merges --pretty=format:"  - %s" "v$BASE_STRING-$FOLDER"...HEAD >> tmpfile -- $PWD
+    git log --no-merges --pretty=format:"  - %s" "v$BASE_STRING"...HEAD >> tmpfile -- $PWD
     echo "" >> tmpfile
     echo "" >> tmpfile
     cat CHANGELOG.md >> tmpfile
     mv tmpfile CHANGELOG.md
     echo -e "$ADJUSTMENTS_MSG"
     read
-    if [ "$1" = "--push" ] || [ "$1" = "--tag" ]; then
+    if [ "$1" = "--push" ] || [ "$1" = "--tag" ] || [ "$1" = "--commit" ]; then
         echo -e "$TAGGING_MSG"
         git add CHANGELOG.md VERSION
-        git commit -m "Bump version to ${INPUT_STRING} for ${FOLDER}."
-        git tag -a -m "Tag version ${INPUT_STRING}." "v$INPUT_STRING-$FOLDER"
-        if [ "$1" = "--push" ]; then
-            echo -e "$PUSHING_MSG"
-            git push origin "v$INPUT_STRING-$FOLDER"
-        fi;
+        git commit -m "Bump version to ${INPUT_STRING}."
+        if [ "$1" = "--push" ] || [ "$1" = "--tag" ]; then
+            git tag -a -m "Tag version ${INPUT_STRING}." "v$INPUT_STRING"
+            if [ "$1" = "--push" ]; then
+                echo -e "$PUSHING_MSG"
+                git push origin "v$INPUT_STRING"
+            fi;
+        fi
     fi;
 else
     echo -e "${WARNING_FLAG} Could not find a VERSION file."
@@ -94,14 +95,16 @@ else
         echo "" >> CHANGELOG.md
         echo -e "$ADJUSTMENTS_MSG"
         read
-        if [ "$1" = "--push" ] || [ "$1" = "--tag" ]; then
+        if [ "$1" = "--push" ] || [ "$1" = "--tag" ] || [ "$1" = "--commit" ]; then
             echo -e "$TAGGING_MSG"
             git add VERSION CHANGELOG.md
-            git commit -m "Add VERSION and CHANGELOG.md files, Bump version to v0.1.0 for ${FOLDER}."
-            git tag -a -m "Tag version 0.1.0." "v0.1.0-$FOLDER"
-            if [ "$1" = "--push" ]; then
-                echo -e "$PUSHING_MSG"
-                git push origin --tags
+            git commit -m "Add VERSION and CHANGELOG.md files, Bump version to v0.1.0."
+            if [ "$1" = "--push" ] || [ "$1" = "--tag" ]; then
+                git tag -a -m "Tag version 0.1.0." "v0.1.0"
+                if [ "$1" = "--push" ]; then
+                    echo -e "$PUSHING_MSG"
+                    git push origin --tags
+                fi;
             fi;
         fi;
     fi
